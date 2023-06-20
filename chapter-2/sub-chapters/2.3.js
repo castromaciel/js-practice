@@ -99,13 +99,40 @@ class Book {
   }
 
   /**
-   * @param {string | number} isbn
+   * @param {string} isbn
    */
   set isbn(isbn) {
     this._isbn = isbn;
   }
   get isbn() {
     return this._isbn
+  }
+
+  /**
+   * @param {string} field
+   */
+  check (field) {
+    if ((!field) && field === '') return () => true;
+
+    if (field !== 'isbn') return () => true;
+
+    return () => {
+      const isbn = this._isbn
+      const ibsnSections = isbn.split('-')
+      const nSections = ibsnSections.length
+      if (nSections !== 5) return false;
+
+      let isValid = true;
+
+      for (let i = 0; i < nSections; i++) {
+        const specificSection = ibsnSections[i]
+        if (!/^([0-9])*$/.test(specificSection)) {
+          isValid = false;
+          break;
+        }
+      }
+      return isValid
+    }
   }
 }
 
@@ -121,6 +148,9 @@ const authorNationality = bookAuthor.nationality
 const bookFirstPublishDate = book.firstPublishDate
 const bookIsbn = book.isbn
 
+const validateIsbn = book.check('isbn')
+const isValidIsbn = validateIsbn()
+
 QUnit.test("Testing Book and Author", (assert) => {
   assert.equal(bookTitle, 'Server Side Js', 'Correct book title')
   assert.equal(bookEditorial, 'Publicaciones Universitarias', 'Correct book editorial')
@@ -130,4 +160,20 @@ QUnit.test("Testing Book and Author", (assert) => {
   assert.equal(authorNationality,'spanish', 'Correct author nationality')
   assert.equal(bookFirstPublishDate, '01/01/2012', 'Correct book first publish date')
   assert.equal(bookIsbn, '123456789', 'Correct book isbn')
+
+  // must fail because isbn '123456789' is not valid
+  assert.ok(isValidIsbn, 'ISBN is valid')
+  
+  // change isbn to a valid format
+  book.isbn = '978-15-678213-9-0'
+  const isValidNewIsbn = validateIsbn()
+  assert.ok(isValidNewIsbn, 'ISBN is valid')
+
+  // validate other field
+  const validateFirstPublishDate = book.check('firstPublishDate')
+  const isValidFirstPublishDate = validateFirstPublishDate()
+
+  // must be ok because it's not implemented yet
+  assert.ok(isValidFirstPublishDate, 'First publish date is valid')
+
 })
